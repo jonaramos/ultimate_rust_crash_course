@@ -27,7 +27,7 @@
 
 //use image::imageops::brighten;
 
-use image::math;
+use image::{imageops::grayscale, math};
 
 fn main() {
     // 1. First, you need to implement some basic command-line argument handling
@@ -50,9 +50,8 @@ fn main() {
     match subcommand.as_str() {
         // EXAMPLE FOR CONVERSION OPERATIONS
         "blur" => {
-            if args.len() != 3 {
-                print_usage_and_exit();
-            }
+            validate_args_len(&args, 3);
+
             let infile = args.remove(0);
             let outfile = args.remove(0);
             let amount = args.remove(0);
@@ -64,9 +63,8 @@ fn main() {
         // **OPTION**
         // Brighten -- see the brighten() function below
         "brighten" => {
-            if args.len() != 3 {
-                print_usage_and_exit();
-            }
+            validate_args_len(&args, 3);
+
             let infile = args.remove(0);
             let outfile = args.remove(0);
             let amount = args.remove(0);
@@ -78,9 +76,8 @@ fn main() {
         // **OPTION**
         // Crop -- see the crop() function below
         "crop" => {
-            if args.len() != 4 {
-                print_usage_and_exit();
-            }
+            validate_args_len(&args, 6);
+
             let infile = args.remove(0);
             let outfile = args.remove(0);
             let x = args.remove(0);
@@ -116,19 +113,34 @@ fn main() {
         }
 
         // **OPTION**
-       // Grayscale -- see the grayscale() function below
+        // Grayscale -- see the grayscale() function below
+        "grayscale" => {
+            validate_args_len(&args, 2);
+
+            let infile = args.remove(0);
+            let outfile = args.remove(0);
+
+            grayscale(infile, outfile);
+        }
 
         // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
         "fractal" => {
-            if args.len() != 1 {
-                print_usage_and_exit();
-            }
+            validate_args_len(&args, 1);
+
             let outfile = args.remove(0);
+
             fractal(outfile);
         }
 
         // **OPTION**
         // Generate -- see the generate() function below -- this should be sort of like "fractal()"!
+        "generate" => {
+            validate_args_len(&args, 1);
+
+            let outfile = args.remove(0);
+
+            generate(outfile);
+        }
 
         // For everything else...
         _ => {
@@ -230,11 +242,10 @@ fn invert(infile: String, outfile: String) {
 }
 
 fn grayscale(infile: String, outfile: String) {
-    // See blur() for an example of how to open an image.
-
-    // .grayscale() takes no arguments. It returns a new image.
-
-    // See blur() for an example of how to save the image.
+    let img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.grayscale();
+    
+    img2.save(outfile).expect("Failed writing OUTFILE");
 }
 
 fn generate(outfile: String) {
