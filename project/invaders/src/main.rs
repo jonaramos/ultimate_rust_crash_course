@@ -1,27 +1,23 @@
 use std::{
-    error::Error, io, sync::mpsc::{self, Receiver}, thread, time::{Duration, Instant}
+    error::Error, io, sync::mpsc::{self}, thread, time::{Duration, Instant}
 };
 use crossterm::{
-    cursor::{Hide, MoveLeft, Show},
+    cursor::{Hide, Show},
     event::{self, Event, KeyCode},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand
 };
 use rusty_audio::Audio;
 use invaders::{
-    frame::{self, new_frame, Drawable, Frame}, invaders::Invaders, player::Player, render
+    frame::{self, new_frame, Drawable}, invaders::Invaders, player::Player, render
 };
 
 fn main() -> Result<(), Box<dyn Error>>
 {
-    const SOUNDS: &'static str = "sounds/";
     let mut audio = Audio::new();
-    audio.add("explode", SOUNDS.to_string() + "explode.wav");
-    audio.add("lose", SOUNDS.to_string() + "lose.wav");
-    audio.add("move", SOUNDS.to_string() + "move.wav");
-    audio.add("pew", SOUNDS.to_string() + "pew.wav");
-    audio.add("startup", SOUNDS.to_string() + "startup.wav");
-    audio.add("win", SOUNDS.to_string() + "win.wav");
+    for sound in &["explode", "lose", "move", "pew", "startup", "win"] {
+        audio.add(sound, &format!("sounds/{}.wav", sound));
+    }
     audio.play("startup");
 
     // Terminal
@@ -91,8 +87,23 @@ fn main() -> Result<(), Box<dyn Error>>
         // Updates
         player.update(delta);
         if invaders.update(delta) {
-            audio.play("move");
+            audio.play("move")
         }
+
+        if player.detect_hits(&mut invaders) {
+            audio.play("explode")
+        }
+
+        // Win or Lose
+        if invaders.all_killed() {
+            audio.play("win");
+            break 'gameloop;
+        }
+        if invaders.reached_bottom() {
+            audio.play("lose");
+            break 'gameloop;
+        }
+
         thread::sleep(Duration::from_millis(1));
     }
     // Cleanup
