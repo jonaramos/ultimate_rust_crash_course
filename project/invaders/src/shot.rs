@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rusty_time::timer::Timer;
+use rusty_time::Timer;
 
 use crate::frame::{ Drawable, Frame};
 
@@ -17,13 +17,13 @@ impl Shot {
             x,
             y,
             exploding: false,
-            timer: Timer::from_millis(50)
+            timer: Timer::new(Duration::from_millis(50))
         }
     }
 
     pub fn update(&mut self, delta: Duration) {
-        self.timer.update(delta);
-        if self.timer.ready && !self.exploding {
+        self.timer.tick(delta);
+        if self.timer.finished() && !self.exploding {
             if self.y > 0 {
                 self.y -= 1
             }
@@ -33,11 +33,11 @@ impl Shot {
 
     pub fn explode(&mut self) {
         self.exploding = true;
-        self.timer = Timer::from_millis(250);
+        self.timer = Timer::new(Duration::from_millis(250));
     }
 
     pub fn dead(&self) -> bool {
-        (self.exploding && self.timer.ready) || (self.y == 0)
+        (self.exploding && self.timer.finished()) || (self.y == 0)
     }
 }
 

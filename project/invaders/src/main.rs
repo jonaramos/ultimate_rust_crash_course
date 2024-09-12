@@ -9,9 +9,7 @@ use crossterm::{
 };
 use rusty_audio::Audio;
 use invaders::{
-    frame::{self, new_frame, Drawable, Frame},
-    player::Player,
-    render
+    frame::{self, new_frame, Drawable, Frame}, invaders::Invaders, player::Player, render
 };
 
 fn main() -> Result<(), Box<dyn Error>>
@@ -51,6 +49,7 @@ fn main() -> Result<(), Box<dyn Error>>
     // Game Loop
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
 
     'gameloop: loop {
         // Per-frame init
@@ -78,12 +77,22 @@ fn main() -> Result<(), Box<dyn Error>>
             }
         }
 
+        // Draw & render
+
+        // Refactoring next two draw lines to a generic drawables vector
+        // player.draw(&mut curr_frame);
+        // invaders.draw(&mut curr_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+        for drawable in drawables {
+            drawable.draw(&mut curr_frame);
+        }
+        let _ = render_tx.send(curr_frame);
+
         // Updates
         player.update(delta);
-
-        // Draw & render
-        player.draw(&mut curr_frame);
-        let _ = render_tx.send(curr_frame);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
         thread::sleep(Duration::from_millis(1));
     }
     // Cleanup
